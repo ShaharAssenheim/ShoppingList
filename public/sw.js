@@ -2,8 +2,8 @@
 const CACHE_NAME = 'shopping-list-v1';
 const STATIC_CACHE = [
   '/',
-  '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon-192.svg'
 ];
 
 // Install event
@@ -13,7 +13,11 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Service Worker: Caching files');
-        return cache.addAll(STATIC_CACHE);
+        return cache.addAll(STATIC_CACHE).catch((err) => {
+          console.error('Service Worker: Cache addAll failed', err);
+          // Continue even if caching fails
+          return Promise.resolve();
+        });
       })
       .then(() => self.skipWaiting())
   );
