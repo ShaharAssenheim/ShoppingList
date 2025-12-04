@@ -43,16 +43,25 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - Network first, fallback to cache
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests for http/https schemes
   if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith('http')) return;
   
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        // Only cache successful responses
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+        
         // Clone the response
         const responseClone = response.clone();
         // Cache the fetched response
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
+          cache.put(event.request, responseClone).catch((err) => {
+            console.warn('Failed to cache:', event.request.url, err);
+          });
         });
         return response;
       })
