@@ -1,0 +1,43 @@
+{
+  "name": "רשימת קניות חכמה",
+  "short_name": "קניות",
+  "description": "רשימת קניות משותפת חכמה למשפחה",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "הוסף מוצר",
+      "short_name": "הוסף",
+      "description": "הוסף מוצר חדש לרשימה",
+      "url": "/?action=add",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": ["shopping", "lifestyle", "productivity"],
+  "display_override": ["window-controls-overlay", "standalone"],
+  "prefer_related_applications": false
+}
