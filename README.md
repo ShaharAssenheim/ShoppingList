@@ -1,5 +1,5 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+
 
 # 🛒 Smart Shopping List
 
@@ -380,7 +380,6 @@ This project is open source and available under the [MIT License](LICENSE).
 - **Next.js** — Amazing React framework
 - **Supabase** — Backend as a service
 - **Vercel** — Hosting and deployment
-- **Google Gemini** — AI-powered categorization
 
 ---
 
