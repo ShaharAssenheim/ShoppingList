@@ -31,10 +31,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check current session
     const initAuth = async () => {
       try {
+        console.log('[Auth] Initializing auth...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Session error:', error);
+          console.error('[Auth] Session error:', error);
           if (mounted) {
             setCurrentUser(null);
             setAuthError(error.message);
@@ -43,7 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
+        console.log('[Auth] Session:', session ? 'Found' : 'None');
+        
         if (session?.user) {
+          console.log('[Auth] User found:', session.user.email);
           // Always create/update the profile, including Google sign-ins (auto-register)
           await createOrUpdateUserProfile(
             session.user.id,
@@ -56,17 +60,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setAuthError(null);
           }
         } else {
+          console.log('[Auth] No user session');
           if (mounted) {
             setCurrentUser(null);
           }
         }
       } catch (err) {
-        console.error('Auth initialization error:', err);
+        console.error('[Auth] Initialization error:', err);
         if (mounted) {
           setCurrentUser(null);
         }
       } finally {
         if (mounted) {
+          console.log('[Auth] Setting loading to false');
           setLoading(false);
         }
       }
@@ -139,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
