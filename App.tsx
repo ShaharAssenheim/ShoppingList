@@ -1,15 +1,19 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { Header } from './components/Header';
 import { ItemInput } from './components/ItemInput';
 import { ShoppingItemRow } from './components/ShoppingItemRow';
 import { AuthPage } from './components/AuthPage';
 import { GroupSetup } from './components/GroupSetup';
-import { ManageGroupMembers } from './components/ManageGroupMembers';
 import { ShoppingItem } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { getItemIcon, getItemCategory } from './utils/iconMapper';
 import { fetchItems, addItem, toggleItemCompleted, deleteItem, deleteCompletedItems, deleteAllItems, fetchGroup, getUserFirstGroup, supabase, DbItem } from './services/supabase';
+
+const ManageGroupMembers = dynamic(() => import('./components/ManageGroupMembers').then(mod => mod.ManageGroupMembers), {
+  loading: () => <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center"><div className="bg-white p-4 rounded-xl shadow-xl">טוען...</div></div>
+});
 
 // --- Inner Component for the Actual Shopping List ---
 const ShoppingListApp: React.FC = () => {
@@ -328,11 +332,16 @@ const ShoppingListApp: React.FC = () => {
     return <GroupSetup onGroupSelected={handleGroupSelected} />;
   }
 
-  const sortedItems = [...items].sort((a, b) => {
-    if (a.isCompleted === b.isCompleted) return b.createdAt - a.createdAt;
-    return a.isCompleted ? 1 : -1;
-  });
-  const completedCount = items.filter(i => i.isCompleted).length;
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      if (a.isCompleted === b.isCompleted) return b.createdAt - a.createdAt;
+      return a.isCompleted ? 1 : -1;
+    });
+  }, [items]);
+
+  const completedCount = useMemo(() => {
+    return items.filter(i => i.isCompleted).length;
+  }, [items]);
 
   return (
     <div className="min-h-screen pb-20 px-4 bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">

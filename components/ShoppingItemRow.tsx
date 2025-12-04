@@ -7,7 +7,7 @@ interface ShoppingItemRowProps {
   onDelete: (id: string) => void;
 }
 
-export const ShoppingItemRow: React.FC<ShoppingItemRowProps> = ({ item, onToggle, onDelete }) => {
+export const ShoppingItemRow: React.FC<ShoppingItemRowProps> = React.memo(({ item, onToggle, onDelete }) => {
   const [isExiting, setIsExiting] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -78,4 +78,4 @@ export const ShoppingItemRow: React.FC<ShoppingItemRowProps> = ({ item, onToggle
       </button>
     </div>
   );
-};
+});
