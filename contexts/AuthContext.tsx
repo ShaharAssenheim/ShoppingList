@@ -27,65 +27,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
 
-    // Check current session
     const initAuth = async () => {
       try {
-        console.log('[Auth] Initializing auth...');
-        
-        // Set a timeout to force loading to false after 5 seconds
-        timeoutId = setTimeout(() => {
-          console.warn('[Auth] Timeout - forcing loading to false');
-          if (mounted) {
-            setLoading(false);
-          }
-        }, 5000);
-        
+        // Check for existing session
         const { data: { session }, error } = await supabase.auth.getSession();
-        
-        // Clear timeout if we got a response
-        clearTimeout(timeoutId);
         
         if (error) {
           console.error('[Auth] Session error:', error);
           if (mounted) {
-            setCurrentUser(null);
             setAuthError(error.message);
-            setLoading(false);
           }
-          return;
         }
 
-        console.log('[Auth] Session:', session ? 'Found' : 'None');
-        
-        if (session?.user) {
-          console.log('[Auth] User found:', session.user.email);
-          // Always create/update the profile, including Google sign-ins (auto-register)
-          await createOrUpdateUserProfile(
-            session.user.id,
-            session.user.email || '',
-            session.user.user_metadata?.full_name
-          ).catch(err => console.error('Failed to update user profile:', err));
-
-          if (mounted) {
+        if (mounted) {
+          if (session?.user) {
+            console.log('[Auth] Session restored for:', session.user.email);
             setCurrentUser(session.user);
-            setAuthError(null);
-          }
-        } else {
-          console.log('[Auth] No user session');
-          if (mounted) {
+            
+            // Update profile in background - don't await
+            createOrUpdateUserProfile(
+              session.user.id,
+              session.user.email || '',
+              session.user.user_metadata?.full_name
+            ).catch(err => console.error('[Auth] Profile update failed:', err));
+          } else {
+            console.log('[Auth] No active session found');
             setCurrentUser(null);
           }
         }
       } catch (err) {
-        console.error('[Auth] Initialization error:', err);
-        if (mounted) {
-          setCurrentUser(null);
-        }
+        console.error('[Auth] Unexpected error:', err);
       } finally {
         if (mounted) {
-          console.log('[Auth] Setting loading to false');
           setLoading(false);
         }
       }
@@ -94,28 +68,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('[Auth] State change:', _event);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[Auth] Auth state change:', event);
+      
       if (!mounted) return;
 
       if (session?.user) {
-        // Auto-register Google users as well by upserting profile
-        await createOrUpdateUserProfile(
+        setCurrentUser(session.user);
+        setAuthError(null);
+        
+        // Update profile in background
+        createOrUpdateUserProfile(
           session.user.id,
           session.user.email || '',
           session.user.user_metadata?.full_name
-        ).catch(err => console.error('Failed to update user profile:', err));
-
-        setCurrentUser(session.user);
-        setAuthError(null);
+        ).catch(err => console.error('[Auth] Profile update failed:', err));
       } else {
         setCurrentUser(null);
       }
+      
+      setLoading(false);
     });
 
     return () => {
       mounted = false;
-      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
