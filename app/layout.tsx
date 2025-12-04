@@ -34,6 +34,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="קניות" />
         <link rel="apple-touch-icon" href="/icon-192.svg" />
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            // Suppress browser extension errors
+            window.addEventListener('error', function(e) {
+              if (e.message && e.message.includes('message channel closed')) {
+                e.preventDefault();
+                return false;
+              }
+            });
+            window.addEventListener('unhandledrejection', function(e) {
+              if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
+                e.preventDefault();
+                return false;
+              }
+            });
+          `
+        }} />
       </head>
       <body className="bg-[#F8F9FE] text-slate-900">
         <ServiceWorkerRegistration />
