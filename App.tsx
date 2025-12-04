@@ -29,6 +29,18 @@ const ShoppingListApp: React.FC = () => {
   const [showManageMembers, setShowManageMembers] = useState(false);
   const [currentGroupOwnerId, setCurrentGroupOwnerId] = useState<string>('');
 
+  // Memoized calculations - moved to top level to avoid conditional hook calls
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      if (a.isCompleted === b.isCompleted) return b.createdAt - a.createdAt;
+      return a.isCompleted ? 1 : -1;
+    });
+  }, [items]);
+
+  const completedCount = useMemo(() => {
+    return items.filter(i => i.isCompleted).length;
+  }, [items]);
+
   // Load Group from LocalStorage or fetch user's first group
   useEffect(() => {
     const loadGroup = async () => {
@@ -331,17 +343,6 @@ const ShoppingListApp: React.FC = () => {
   if (!currentGroupId) {
     return <GroupSetup onGroupSelected={handleGroupSelected} />;
   }
-
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      if (a.isCompleted === b.isCompleted) return b.createdAt - a.createdAt;
-      return a.isCompleted ? 1 : -1;
-    });
-  }, [items]);
-
-  const completedCount = useMemo(() => {
-    return items.filter(i => i.isCompleted).length;
-  }, [items]);
 
   return (
     <div className="min-h-screen pb-20 px-4 bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">
