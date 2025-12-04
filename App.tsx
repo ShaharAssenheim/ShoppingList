@@ -9,7 +9,7 @@ import { ManageGroupMembers } from './components/ManageGroupMembers';
 import { ShoppingItem } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { getItemIcon, getItemCategory } from './utils/iconMapper';
-import { fetchItems, addItem, toggleItemCompleted, deleteItem, deleteCompletedItems, deleteAllItems, fetchGroup, getUserFirstGroup } from './services/supabase';
+import { fetchItems, addItem, toggleItemCompleted, deleteItem, deleteCompletedItems, deleteAllItems, fetchGroup, getUserFirstGroup, supabase, DbItem } from './services/supabase';
 
 // --- Inner Component for the Actual Shopping List ---
 const ShoppingListApp: React.FC = () => {
@@ -95,6 +95,62 @@ const ShoppingListApp: React.FC = () => {
       }
     };
     loadItems();
+  }, [currentGroupId]);
+
+  // Real-time subscription for items
+  useEffect(() => {
+    if (!currentGroupId) return;
+
+    const channel = supabase
+      .channel('items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items',
+          filter: `group_id=eq.${currentGroupId}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newItem = payload.new as DbItem;
+            setItems(prev => {
+              if (prev.some(i => i.id === newItem.id)) return prev;
+              return [{
+                id: newItem.id,
+                name: newItem.name,
+                isCompleted: newItem.is_completed,
+                emoji: newItem.emoji,
+                category: newItem.category,
+                createdAt: new Date(newItem.created_at).getTime(),
+                isAnalysing: false
+              }, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedItem = payload.new as DbItem;
+            setItems(prev => prev.map(item => 
+              item.id === updatedItem.id 
+                ? {
+                    ...item,
+                    name: updatedItem.name,
+                    isCompleted: updatedItem.is_completed,
+                    emoji: updatedItem.emoji,
+                    category: updatedItem.category,
+                    createdAt: new Date(updatedItem.created_at).getTime(),
+                  }
+                : item
+            ));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = payload.old.id;
+            setItems(prev => prev.filter(item => item.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentGroupId]);
 
   // Enhanced badge logic with persistence and cross-platform support

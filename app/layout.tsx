@@ -1,19 +1,21 @@
 import './globals.css';
 import React from 'react';
+import type { Metadata, Viewport } from 'next';
 import ServiceWorkerRegistration from './ServiceWorkerRegistration';
 
-export const metadata = {
+export const viewport: Viewport = {
+  themeColor: '#6366f1',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+};
+
+export const metadata: Metadata = {
   title: 'רשימת קניות חכמה',
   description: 'רשימת קניות משותפת חכמה למשפחה',
   manifest: '/manifest.json',
-  themeColor: '#6366f1',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover'
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
