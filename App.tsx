@@ -138,7 +138,16 @@ const ShoppingListApp: React.FC = () => {
           
           if (payload.eventType === 'INSERT') {
             const newItem = payload.new as DbItem;
+            
+            // Skip if we added this item ourselves (avoid duplicate from optimistic update)
+            if (myAddedItemIds.has(newItem.id)) {
+              console.log('[Realtime] Skipping own item:', newItem.id);
+              myAddedItemIds.delete(newItem.id);
+              return;
+            }
+            
             setItems(prev => {
+              // Also check if item already exists (safety check)
               if (prev.some(i => i.id === newItem.id)) return prev;
               return [{
                 id: newItem.id,
@@ -152,17 +161,12 @@ const ShoppingListApp: React.FC = () => {
             });
             
             // Send notification for items added by others
-            if (!myAddedItemIds.has(newItem.id)) {
-              if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                  type: 'NEW_ITEM_ADDED',
-                  itemName: newItem.name,
-                  emoji: newItem.emoji
-                });
-              }
-            } else {
-              // Remove from our tracking set
-              myAddedItemIds.delete(newItem.id);
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({
+                type: 'NEW_ITEM_ADDED',
+                itemName: newItem.name,
+                emoji: newItem.emoji
+              });
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedItem = payload.new as DbItem;
