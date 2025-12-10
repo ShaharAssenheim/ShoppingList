@@ -161,11 +161,17 @@ const ShoppingListApp: React.FC = () => {
             });
             
             // Send notification for items added by others
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-              navigator.serviceWorker.controller.postMessage({
-                type: 'NEW_ITEM_ADDED',
-                itemName: newItem.name,
-                emoji: newItem.emoji
+            console.log('[Realtime] New item from another user, sending notification');
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.ready.then((registration) => {
+                if (registration.active) {
+                  registration.active.postMessage({
+                    type: 'NEW_ITEM_ADDED',
+                    itemName: newItem.name,
+                    emoji: newItem.emoji
+                  });
+                  console.log('[Realtime] Notification message sent to SW');
+                }
               });
             }
           } else if (payload.eventType === 'UPDATE') {

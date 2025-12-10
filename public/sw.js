@@ -1,5 +1,5 @@
 // Service Worker for PWA with Badge Support
-const CACHE_NAME = 'shopping-list-v3';
+const CACHE_NAME = 'shopping-list-v4';
 const STATIC_CACHE = [
   '/',
   '/manifest.json',
@@ -97,28 +97,42 @@ self.addEventListener('message', (event) => {
   
   // New item notification - show to user when app is in background
   if (event.data && event.data.type === 'NEW_ITEM_ADDED') {
-    const { itemName, emoji, addedBy } = event.data;
+    const { itemName, emoji } = event.data;
+    console.log('[SW] Received NEW_ITEM_ADDED:', itemName, emoji);
+    console.log('[SW] Notification permission:', Notification.permission);
     
-    // Only show notification if permission granted and app is not focused
+    // Show notification if permission granted
     if (Notification.permission === 'granted') {
       self.clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then((clientList) => {
+          console.log('[SW] Clients found:', clientList.length);
           // Check if any window is focused
-          const hasFocusedClient = clientList.some(client => client.visibilityState === 'visible');
+          const hasFocusedClient = clientList.some(client => {
+            console.log('[SW] Client visibility:', client.visibilityState);
+            return client.visibilityState === 'visible';
+          });
           
-          // Only notify if app is in background
-          if (!hasFocusedClient) {
-            self.registration.showNotification('פריט חדש נוסף! 🛒', {
-              body: `${emoji} ${itemName}${addedBy ? ` (נוסף ע״י ${addedBy})` : ''}`,
-              icon: '/icon-192.svg',
-              badge: '/icon-192.svg',
-              tag: 'new-item-' + Date.now(),
-              renotify: true,
-              vibrate: [100, 50, 100],
-              data: { url: '/' }
-            });
-          }
+          console.log('[SW] Has focused client:', hasFocusedClient);
+          
+          // Show notification (even if app is open, for mobile visibility)
+          self.registration.showNotification('פריט חדש נוסף! 🛒', {
+            body: `${emoji} ${itemName}`,
+            icon: '/icon-192.svg',
+            badge: '/icon-192.svg',
+            tag: 'new-item-' + Date.now(),
+            renotify: true,
+            vibrate: [200, 100, 200],
+            requireInteraction: false,
+            silent: hasFocusedClient, // Silent if app is focused
+            data: { url: '/' }
+          }).then(() => {
+            console.log('[SW] Notification shown successfully');
+          }).catch((err) => {
+            console.error('[SW] Failed to show notification:', err);
+          });
         });
+    } else {
+      console.log('[SW] Notification permission not granted');
     }
   }
   

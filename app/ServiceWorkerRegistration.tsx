@@ -36,17 +36,18 @@ export default function ServiceWorkerRegistration() {
           // Just log the error, don't reload the page
         });
       
-      // Request notification permission for Android badge support
-      if ('Notification' in window && Notification.permission === 'default') {
-        // Don't request immediately, wait for user interaction
-        const requestPermission = () => {
-          Notification.requestPermission().then((permission) => {
-            console.log('[SW] Notification permission:', permission);
-          });
-          // Remove listener after first interaction
-          document.removeEventListener('click', requestPermission);
-        };
-        document.addEventListener('click', requestPermission, { once: true });
+      // Request notification permission
+      if ('Notification' in window) {
+        console.log('[SW] Current notification permission:', Notification.permission);
+        
+        if (Notification.permission === 'default') {
+          // Request permission after a short delay (gives user time to see the app)
+          setTimeout(() => {
+            Notification.requestPermission().then((permission) => {
+              console.log('[SW] Notification permission result:', permission);
+            });
+          }, 2000);
+        }
       }
     }
   }, []);
