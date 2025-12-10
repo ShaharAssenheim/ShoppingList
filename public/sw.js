@@ -1,5 +1,5 @@
 // Service Worker for PWA with Badge Support
-const CACHE_NAME = 'shopping-list-v2';
+const CACHE_NAME = 'shopping-list-v3';
 const STATIC_CACHE = [
   '/',
   '/manifest.json',
@@ -93,19 +93,32 @@ self.addEventListener('message', (event) => {
         });
       }
     }
+  }
+  
+  // New item notification - show to user when app is in background
+  if (event.data && event.data.type === 'NEW_ITEM_ADDED') {
+    const { itemName, emoji, addedBy } = event.data;
     
-    // For Android: Update notification badge (requires notification permission)
-    if (count > 0 && Notification.permission === 'granted') {
-      // Show a silent notification with badge
-      self.registration.showNotification('רשימת קניות', {
-        body: `יש לך ${count} פריטים ברשימה`,
-        badge: '/icon-192.png',
-        icon: '/icon-192.png',
-        tag: 'shopping-badge',
-        renotify: false,
-        silent: true,
-        data: { count }
-      });
+    // Only show notification if permission granted and app is not focused
+    if (Notification.permission === 'granted') {
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          // Check if any window is focused
+          const hasFocusedClient = clientList.some(client => client.visibilityState === 'visible');
+          
+          // Only notify if app is in background
+          if (!hasFocusedClient) {
+            self.registration.showNotification('פריט חדש נוסף! 🛒', {
+              body: `${emoji} ${itemName}${addedBy ? ` (נוסף ע״י ${addedBy})` : ''}`,
+              icon: '/icon-192.svg',
+              badge: '/icon-192.svg',
+              tag: 'new-item-' + Date.now(),
+              renotify: true,
+              vibrate: [100, 50, 100],
+              data: { url: '/' }
+            });
+          }
+        });
     }
   }
   

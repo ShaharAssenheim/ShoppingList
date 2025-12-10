@@ -114,6 +114,9 @@ const ShoppingListApp: React.FC = () => {
     loadItems();
   }, [currentGroupId]);
 
+  // Track items we've added ourselves (to avoid self-notifications)
+  const [myAddedItemIds] = useState<Set<string>>(() => new Set());
+
   // Real-time subscription for items
   useEffect(() => {
     if (!currentGroupId) return;
@@ -143,6 +146,20 @@ const ShoppingListApp: React.FC = () => {
                 isAnalysing: false
               }, ...prev];
             });
+            
+            // Send notification for items added by others
+            if (!myAddedItemIds.has(newItem.id)) {
+              if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                  type: 'NEW_ITEM_ADDED',
+                  itemName: newItem.name,
+                  emoji: newItem.emoji
+                });
+              }
+            } else {
+              // Remove from our tracking set
+              myAddedItemIds.delete(newItem.id);
+            }
           } else if (payload.eventType === 'UPDATE') {
             const updatedItem = payload.new as DbItem;
             setItems(prev => prev.map(item => 
@@ -257,6 +274,8 @@ const ShoppingListApp: React.FC = () => {
 
     try {
       const dbItem = await addItem(currentGroupId, name, emoji, category);
+      // Track this item as one we added (to avoid self-notification)
+      myAddedItemIds.add(dbItem.id);
       setItems(prev => prev.map(i => i.id === tempId ? {
         ...i,
         id: dbItem.id,
@@ -268,7 +287,7 @@ const ShoppingListApp: React.FC = () => {
       // alert(`שגיאה בהוספת המוצר: ${e instanceof Error ? e.message : 'שגיאה לא ידועה'}`);
       setItems(prev => prev.filter(i => i.id !== tempId));
     }
-  }, [currentGroupId]);
+  }, [currentGroupId, myAddedItemIds]);
 
   const handleToggleItem = async (id: string) => {
     const item = items.find(i => i.id === id);
