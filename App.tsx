@@ -121,8 +121,10 @@ const ShoppingListApp: React.FC = () => {
   useEffect(() => {
     if (!currentGroupId) return;
 
+    console.log('[Realtime] Setting up subscription for group:', currentGroupId);
+
     const channel = supabase
-      .channel('items-changes')
+      .channel(`items-${currentGroupId}`)
       .on(
         'postgres_changes',
         {
@@ -132,6 +134,8 @@ const ShoppingListApp: React.FC = () => {
           filter: `group_id=eq.${currentGroupId}`
         },
         (payload) => {
+          console.log('[Realtime] Received event:', payload.eventType, payload);
+          
           if (payload.eventType === 'INSERT') {
             const newItem = payload.new as DbItem;
             setItems(prev => {
@@ -180,12 +184,15 @@ const ShoppingListApp: React.FC = () => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Realtime] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[Realtime] Removing channel for group:', currentGroupId);
       supabase.removeChannel(channel);
     };
-  }, [currentGroupId]);
+  }, [currentGroupId, myAddedItemIds]);
 
   // Enhanced badge logic with persistence and cross-platform support
   useEffect(() => {
