@@ -27,37 +27,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
     const initAuth = async () => {
       try {
-        // Check for existing session
+        // 1. Check for existing session first
         const { data: { session }, error } = await supabase.auth.getSession();
         
+        if (!mounted) return;
+
         if (error) {
           console.error('[Auth] Session error:', error);
-          if (mounted) {
-            setAuthError(error.message);
-          }
         }
 
-        if (mounted) {
+        if (session?.user) {
+          console.log('[Auth] Session restored:', session.user.email);
+          setCurrentUser(session.user);
+          
+          // Update profile in background
+          createOrUpdateUserProfile(
+            session.user.id,
+            session.user.email || '',
+            session.user.user_metadata?.full_name
+          ).catch(err => console.error('[Auth] Profile update failed:', err));
+        }
+
+        // 2. Set up listener for future changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('[Auth] Auth state change:', event);
+          
+          if (!mounted) return;
+
           if (session?.user) {
-            console.log('[Auth] Session restored for:', session.user.email);
             setCurrentUser(session.user);
-            
-            // Update profile in background - don't await
-            createOrUpdateUserProfile(
-              session.user.id,
-              session.user.email || '',
-              session.user.user_metadata?.full_name
-            ).catch(err => console.error('[Auth] Profile update failed:', err));
+            setAuthError(null);
           } else {
-            console.log('[Auth] No active session found');
             setCurrentUser(null);
           }
-        }
+          
+          // Ensure loading is false after any auth event
+          setLoading(false);
+        });
+        
+        authSubscription = subscription;
+
       } catch (err) {
-        console.error('[Auth] Unexpected error:', err);
+        console.error('[Auth] Init error:', err);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -67,32 +82,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initAuth();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] Auth state change:', event);
-      
-      if (!mounted) return;
-
-      if (session?.user) {
-        setCurrentUser(session.user);
-        setAuthError(null);
-        
-        // Update profile in background
-        createOrUpdateUserProfile(
-          session.user.id,
-          session.user.email || '',
-          session.user.user_metadata?.full_name
-        ).catch(err => console.error('[Auth] Profile update failed:', err));
-      } else {
-        setCurrentUser(null);
-      }
-      
-      setLoading(false);
-    });
-
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -116,14 +110,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser(null);
       setAuthError(null);
       
-      // Force reload to clear any cached state
-      window.location.href = '/';
+      // No forced reload - let React handle the state change
     } catch (err) {
       console.error('Failed to logout:', err);
-      // Even if there's an error, clear local state and reload
       setCurrentUser(null);
       setAuthError(null);
-      window.location.href = '/';
     }
   };
 

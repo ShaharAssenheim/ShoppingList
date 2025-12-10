@@ -5,21 +5,6 @@ import { useEffect } from 'react';
 export default function ServiceWorkerRegistration() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // Unregister any existing service workers first to prevent invalid state
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        const hasInvalidWorker = registrations.some(reg => !reg.active);
-        
-        if (hasInvalidWorker) {
-          console.log('[SW] Cleaning up invalid service workers...');
-          Promise.all(registrations.map(reg => reg.unregister()))
-            .then(() => {
-              console.log('[SW] All service workers unregistered, reloading...');
-              window.location.reload();
-            });
-          return;
-        }
-      });
-
       // Register service worker with error handling
       navigator.serviceWorker
         .register('/sw.js', { scope: '/' })
@@ -39,11 +24,8 @@ export default function ServiceWorkerRegistration() {
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New service worker available, reload the page
-                  if (confirm('עדכון חדש זמין! לרענן את האפליקציה?')) {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                  }
+                  // New service worker available
+                  console.log('[SW] New content is available; please refresh.');
                 }
               });
             }
@@ -51,18 +33,7 @@ export default function ServiceWorkerRegistration() {
         })
         .catch((error) => {
           console.error('[SW] Service Worker registration failed:', error);
-          
-          // If registration fails, try to unregister all and reload
-          if (error.name === 'InvalidStateError') {
-            console.log('[SW] Invalid state detected, cleaning up...');
-            navigator.serviceWorker.getRegistrations().then((registrations) => {
-              Promise.all(registrations.map(reg => reg.unregister()))
-                .then(() => {
-                  console.log('[SW] Cleanup complete, reloading...');
-                  setTimeout(() => window.location.reload(), 500);
-                });
-            });
-          }
+          // Just log the error, don't reload the page
         });
       
       // Request notification permission for Android badge support

@@ -1,5 +1,5 @@
 // Service Worker for PWA with Badge Support
-const CACHE_NAME = 'shopping-list-v1';
+const CACHE_NAME = 'shopping-list-v2';
 const STATIC_CACHE = [
   '/',
   '/manifest.json',
@@ -36,9 +36,13 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      return self.clients.claim().catch((err) => {
+        // Ignore InvalidStateError if it happens, it just means we can't take control immediately
+        console.log('Service Worker: Could not claim clients', err);
+      });
     })
   );
-  return self.clients.claim();
 });
 
 // Fetch event - Network first, fallback to cache

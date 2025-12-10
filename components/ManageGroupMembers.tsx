@@ -24,6 +24,7 @@ export const ManageGroupMembers = ({ groupId, groupOwnerId, onClose }: ManageGro
   const [selectedUserId, setSelectedUserId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const isOwner = currentUser?.id === groupOwnerId;
 
@@ -44,7 +45,14 @@ export const ManageGroupMembers = ({ groupId, groupOwnerId, onClose }: ManageGro
       const enrichedMembers = memberData.map(member => ({
         ...member,
         profile: users.find(u => u.id === member.user_id)
-      }));
+      })).sort((a, b) => {
+        // Sort: Owner first, then by name
+        if (a.user_id === groupOwnerId) return -1;
+        if (b.user_id === groupOwnerId) return 1;
+        const nameA = a.profile?.full_name || a.profile?.email || '';
+        const nameB = b.profile?.full_name || b.profile?.email || '';
+        return nameA.localeCompare(nameB);
+      });
       setMembers(enrichedMembers);
       
       // Filter available users
@@ -77,13 +85,17 @@ export const ManageGroupMembers = ({ groupId, groupOwnerId, onClose }: ManageGro
   const handleRemoveUser = async (userId: string) => {
     if (!isOwner || userId === groupOwnerId) return;
     
-    if (!window.confirm('האם אתה בטוח שברצונך להסיר משתמש זה מהקבוצה?')) return;
-
-    try {
-      await removeUserFromGroup(groupId, userId);
-      await loadData();
-    } catch (e) {
-      console.error('Failed to remove user', e);
+    if (confirmDeleteId === userId) {
+      try {
+        await removeUserFromGroup(groupId, userId);
+        await loadData();
+        setConfirmDeleteId(null);
+      } catch (e) {
+        console.error('Failed to remove user', e);
+      }
+    } else {
+      setConfirmDeleteId(userId);
+      setTimeout(() => setConfirmDeleteId(null), 3000);
     }
   };
 
@@ -177,12 +189,20 @@ export const ManageGroupMembers = ({ groupId, groupOwnerId, onClose }: ManageGro
                   {isOwner && member.user_id !== groupOwnerId && (
                     <button
                       onClick={() => handleRemoveUser(member.user_id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="הסר מהקבוצה"
+                      className={`p-2 rounded-lg transition-colors ${
+                        confirmDeleteId === member.user_id 
+                          ? 'bg-red-100 text-red-600' 
+                          : 'text-red-500 hover:bg-red-50'
+                      }`}
+                      title={confirmDeleteId === member.user_id ? 'לחץ שוב לאישור' : 'הסר מהקבוצה'}
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      {confirmDeleteId === member.user_id ? (
+                        <span className="text-xs font-bold px-1">בטוח?</span>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
                     </button>
                   )}
                 </div>

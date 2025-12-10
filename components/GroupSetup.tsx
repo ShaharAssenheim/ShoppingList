@@ -10,6 +10,7 @@ interface GroupSetupProps {
 export const GroupSetup: React.FC<GroupSetupProps> = ({ onGroupSelected }) => {
   const [groupName, setGroupName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { currentUser, logout } = useAuth();
 
   const handleCreateGroup = async (e: React.FormEvent) => {
@@ -17,12 +18,13 @@ export const GroupSetup: React.FC<GroupSetupProps> = ({ onGroupSelected }) => {
     if (!groupName.trim() || !currentUser) return;
 
     setLoading(true);
+    setError('');
     try {
       const groupId = await createGroup(groupName);
       onGroupSelected(groupId, groupName);
     } catch (error) {
       console.error("Error creating group:", error);
-      alert(`שגיאה ביצירת הקבוצה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+      setError(`שגיאה ביצירת הקבוצה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
     } finally {
       setLoading(false);
     }
@@ -55,6 +57,9 @@ export const GroupSetup: React.FC<GroupSetupProps> = ({ onGroupSelected }) => {
           >
             {loading ? 'יוצר קבוצה...' : 'צור והתחל לקנות'}
           </button>
+          {error && (
+            <p className="text-red-500 text-sm mt-2">{error}</p>
+          )}
         </form>
 
         <button 

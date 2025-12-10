@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="he" dir="rtl">
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -38,17 +38,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icon-192.svg" />
         <script dangerouslySetInnerHTML={{
           __html: `
-            // Suppress browser extension errors
+            // Suppress browser extension errors and known selector issues
             window.addEventListener('error', function(e) {
-              if (e.message && e.message.includes('message channel closed')) {
+              if (e.message && (
+                e.message.includes('message channel closed') ||
+                e.message.includes('not a valid selector') ||
+                e.message.includes('*,:x')
+              )) {
                 e.preventDefault();
-                return false;
+                return true;
               }
             });
             window.addEventListener('unhandledrejection', function(e) {
-              if (e.reason && e.reason.message && e.reason.message.includes('message channel closed')) {
+              if (e.reason && e.reason.message && (
+                e.reason.message.includes('message channel closed') ||
+                e.reason.message.includes('not a valid selector') ||
+                e.reason.message.includes('*,:x')
+              )) {
                 e.preventDefault();
-                return false;
+                return true;
               }
             });
           `
