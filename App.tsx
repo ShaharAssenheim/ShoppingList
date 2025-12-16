@@ -141,14 +141,18 @@ const ShoppingListApp: React.FC = () => {
             
             // Skip if we added this item ourselves (avoid duplicate from optimistic update)
             if (myAddedItemIdsRef.current.has(newItem.id)) {
-              console.log('[Realtime] Skipping own item:', newItem.id);
-              myAddedItemIdsRef.current.delete(newItem.id);
+              console.log('[Realtime] Skipping own item (already added optimistically):', newItem.id);
               return;
             }
             
             setItems(prev => {
-              // Also check if item already exists (safety check)
-              if (prev.some(i => i.id === newItem.id)) return prev;
+              // Safety check: don't add if item already exists
+              if (prev.some(i => i.id === newItem.id)) {
+                console.log('[Realtime] Item already exists, skipping:', newItem.id);
+                return prev;
+              }
+              
+              console.log('[Realtime] Adding item from another user:', newItem.id);
               return [{
                 id: newItem.id,
                 name: newItem.name,
@@ -276,8 +280,8 @@ const ShoppingListApp: React.FC = () => {
     const emoji = getItemIcon(name);
     const category = getItemCategory(name);
     
-    // Optimistic update
-    const tempId = Date.now().toString();
+    // Optimistic update - use a more unique temp ID
+    const tempId = `temp_${Date.now()}_${Math.random()}`;
     const tempItem: ShoppingItem = {
       id: tempId,
       name,
@@ -287,21 +291,44 @@ const ShoppingListApp: React.FC = () => {
       createdAt: Date.now(),
       isAnalysing: true,
     };
+    
     setItems(prev => [tempItem, ...prev]);
 
     try {
       const dbItem = await addItem(currentGroupId, name, emoji, category);
-      // Track this item as one we added (to avoid self-notification)
+      
+      // Track this item as one we added (to avoid duplicate from realtime)
       myAddedItemIdsRef.current.add(dbItem.id);
-      setItems(prev => prev.map(i => i.id === tempId ? {
-        ...i,
-        id: dbItem.id,
-        createdAt: new Date(dbItem.created_at).getTime(),
-        isAnalysing: false
-      } : i));
+      
+      console.log('[AddItem] Item created, replacing temp item:', { tempId, realId: dbItem.id });
+      
+      // Replace temp item with real item
+      setItems(prev => {
+        // Remove temp item and check if real item doesn't already exist
+        const withoutTemp = prev.filter(i => i.id !== tempId);
+        
+        // Safety check: don't add if real item already exists
+        if (withoutTemp.some(i => i.id === dbItem.id)) {
+          console.log('[AddItem] Real item already exists, not adding duplicate');
+          return withoutTemp;
+        }
+        
+        // Replace temp with real item
+        return prev.map(i => i.id === tempId ? {
+          ...i,
+          id: dbItem.id,
+          createdAt: new Date(dbItem.created_at).getTime(),
+          isAnalysing: false
+        } : i);
+      });
+      
+      // Clean up tracking after a short delay
+      setTimeout(() => {
+        myAddedItemIdsRef.current.delete(dbItem.id);
+      }, 2000);
+      
     } catch (e) {
       console.error("Failed to add item", e);
-      // alert(`שגיאה בהוספת המוצר: ${e instanceof Error ? e.message : 'שגיאה לא ידועה'}`);
       setItems(prev => prev.filter(i => i.id !== tempId));
     }
   }, [currentGroupId]);
