@@ -60,7 +60,10 @@ Items auto-categorize with emoji icons for visual organization.
 ✅ **Completion Tracking**  
 Mark items done with visual feedback and timestamp tracking.
 
-🌐 **Hebrew RTL Support**  
+�️ **Voice Input**  
+Add items hands-free using speech recognition. Auto-adds when you finish speaking!
+
+�🌐 **Hebrew RTL Support**  
 Fully optimized right-to-left interface with Hebrew localization.
 
 </td>
@@ -122,6 +125,27 @@ Manage groups, members, and preferences easily.
 </td>
 </tr>
 </table>
+
+### 🎙️ Voice Input
+
+**Hands-Free Shopping**
+- 🎤 **Speech Recognition** - Add items by speaking
+- ⚡ **Auto-Add Mode** - Items add automatically when you finish speaking
+- 🔄 **Manual Mode** - Review items before adding (long-press to toggle)
+- 🇮🇱 **Hebrew Support** - Optimized for Hebrew language recognition
+- ✨ **Visual Feedback** - See recognized text before it's added
+
+**How to Use:**
+1. Tap the microphone button 🎙️
+2. Say the item name (e.g., "חלב")
+3. Stop speaking - item auto-adds in 0.5s!
+4. Long-press mic button to toggle auto/manual mode
+
+**Browser Support:**
+- ✅ Chrome/Edge (Desktop & Mobile)
+- ✅ Safari iOS 14.5+
+- ✅ Android Chrome
+- ❌ Firefox (not yet supported)
 
 ### 🔔 Badge Notifications
 
@@ -566,13 +590,13 @@ CMD ["npm", "start"]
 </details>
 
 ---
-
-## 🎯 Roadmap
-
+x] 🎙️ **Voice input for adding items** - ✅ Completed!
 - [ ] 🌙 Dark mode support
 - [ ] 🔍 Search and filter items
 - [ ] 📊 Shopping history and analytics
 - [ ] 🏪 Store locations integration
+- [ ] 💰 Price tracking and budgets
+- [ ] 📸 Image attachments fortion
 - [ ] 💰 Price tracking and budgets
 - [ ] 📸 Image attachments for items
 - [ ] 🎙️ Voice input for adding items
