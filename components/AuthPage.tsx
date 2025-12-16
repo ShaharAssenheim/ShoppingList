@@ -28,11 +28,12 @@ export const AuthPage: React.FC = () => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                            (window.navigator as any).standalone === true;
       
-      // Get the full URL including protocol and path
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      // Get the full URL - use environment variable for production or current origin
+      // This ensures we never redirect to localhost in production
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       const redirectUrl = `${baseUrl}/`;
       
-      console.log('[Auth] Google sign-in started', { isIOS, isStandalone, redirectUrl });
+      console.log('[Auth] Google sign-in started', { isIOS, isStandalone, redirectUrl, baseUrl });
       
       // For Google OAuth, we can't prevent signup at the OAuth level
       // So we'll check after authentication in the AuthContext
@@ -99,7 +100,7 @@ export const AuthPage: React.FC = () => {
           email, 
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL || window.location.origin,
           }
         });
         if (error) throw error;
