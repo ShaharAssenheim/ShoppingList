@@ -23,23 +23,48 @@ export const AuthPage: React.FC = () => {
       setLoading(true);
       setError('');
       
+      // Detect if we're in iOS Safari/PWA mode
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                           (window.navigator as any).standalone === true;
+      
+      // Get the full URL including protocol and path
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectUrl = `${baseUrl}/`;
+      
+      console.log('[Auth] Google sign-in started', { isIOS, isStandalone, redirectUrl });
+      
       // For Google OAuth, we can't prevent signup at the OAuth level
       // So we'll check after authentication in the AuthContext
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
-          }
+            prompt: 'select_account', // Changed from 'consent' to allow account selection
+          },
+          // On iOS, we need to ensure popups work correctly
+          skipBrowserRedirect: false,
         }
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error('[Auth] Google OAuth error:', error);
+        throw error;
+      }
+      
       // OAuth will redirect, so loading state stays true
     } catch (err: any) {
-      setError('שגיאה בהתחברות עם גוגל. ודא שהגדרת OAuth בהגדרות Supabase.');
-      console.error(err);
+      console.error('[Auth] Google sign-in failed:', err);
+      
+      // More specific error messages
+      if (err.message?.includes('popup')) {
+        setError('חסימת חלונות קופצים פעילה. אנא אפשר חלונות קופצים ונסה שוב.');
+      } else {
+        setError('שגיאה בהתחברות עם גוגל. נסה שוב או השתמש באימייל וסיסמה.');
+      }
+      
       setLoading(false);
     }
   };

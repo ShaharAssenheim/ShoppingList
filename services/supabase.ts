@@ -14,11 +14,15 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // Better storage handling for iOS
     storage: typeof window !== 'undefined' ? window.localStorage : {
       getItem: () => null,
       setItem: () => {},
       removeItem: () => {},
-    }
+    },
+    // iOS-specific settings
+    flowType: 'pkce', // More secure and works better with iOS
+    storageKey: 'supabase.auth.token', // Explicit key for iOS compatibility
   }
 });
 

@@ -22,8 +22,8 @@ export const metadata: Metadata = {
     title: 'קניות'
   },
   icons: {
-    icon: '/icon-192.svg',
-    apple: '/icon-192.svg'
+    icon: ['/icon-192.png', '/icon-512.png'],
+    apple: '/icon-180.png'
   }
 };
 
@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="קניות" />
-        <link rel="apple-touch-icon" href="/icon-192.svg" />
+        <link rel="apple-touch-icon" href="/icon-180.png" />
         <script dangerouslySetInnerHTML={{
           __html: `
             // Suppress browser extension errors and known selector issues

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Header } from './components/Header';
 import { ItemInput } from './components/ItemInput';
@@ -115,7 +115,7 @@ const ShoppingListApp: React.FC = () => {
   }, [currentGroupId]);
 
   // Track items we've added ourselves (to avoid self-notifications)
-  const [myAddedItemIds] = useState<Set<string>>(() => new Set());
+  const myAddedItemIdsRef = useRef<Set<string>>(new Set());
 
   // Real-time subscription for items
   useEffect(() => {
@@ -140,9 +140,9 @@ const ShoppingListApp: React.FC = () => {
             const newItem = payload.new as DbItem;
             
             // Skip if we added this item ourselves (avoid duplicate from optimistic update)
-            if (myAddedItemIds.has(newItem.id)) {
+            if (myAddedItemIdsRef.current.has(newItem.id)) {
               console.log('[Realtime] Skipping own item:', newItem.id);
-              myAddedItemIds.delete(newItem.id);
+              myAddedItemIdsRef.current.delete(newItem.id);
               return;
             }
             
@@ -202,7 +202,7 @@ const ShoppingListApp: React.FC = () => {
       console.log('[Realtime] Removing channel for group:', currentGroupId);
       supabase.removeChannel(channel);
     };
-  }, [currentGroupId, myAddedItemIds]);
+  }, [currentGroupId]);
 
   // Enhanced badge logic with persistence and cross-platform support
   useEffect(() => {
@@ -292,7 +292,7 @@ const ShoppingListApp: React.FC = () => {
     try {
       const dbItem = await addItem(currentGroupId, name, emoji, category);
       // Track this item as one we added (to avoid self-notification)
-      myAddedItemIds.add(dbItem.id);
+      myAddedItemIdsRef.current.add(dbItem.id);
       setItems(prev => prev.map(i => i.id === tempId ? {
         ...i,
         id: dbItem.id,
@@ -304,7 +304,7 @@ const ShoppingListApp: React.FC = () => {
       // alert(`שגיאה בהוספת המוצר: ${e instanceof Error ? e.message : 'שגיאה לא ידועה'}`);
       setItems(prev => prev.filter(i => i.id !== tempId));
     }
-  }, [currentGroupId, myAddedItemIds]);
+  }, [currentGroupId]);
 
   const handleToggleItem = async (id: string) => {
     const item = items.find(i => i.id === id);
