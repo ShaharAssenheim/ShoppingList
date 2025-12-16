@@ -469,18 +469,18 @@ const ShoppingListApp: React.FC = () => {
                 </div>
               </button>
               
-              {/* Logout Button */}
-              {/* Logout Button */}
+              {/* Logout Button - Icon only on mobile, with text on desktop */}
               <button 
                 onClick={logout}
-                className="group relative px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border border-red-100 text-red-600 hover:text-red-700 transition-all shadow-sm hover:shadow-md active:scale-95 overflow-hidden"
+                className="group relative p-2.5 md:px-4 md:py-2.5 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 border border-red-100 text-red-600 hover:text-red-700 transition-all shadow-sm hover:shadow-md active:scale-95 overflow-hidden"
                 title="התנתק"
+                aria-label="יציאה"
               > {/* Animated Background */}
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/5 to-red-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 
                 <div className="relative flex items-center gap-2">
-                  <span className="text-sm font-bold">יציאה</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 transition-transform group-hover:translate-x-0.5">
+                  <span className="hidden md:inline text-sm font-bold">יציאה</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 md:w-4 md:h-4 transition-transform group-hover:translate-x-0.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3-3l3-3m0 0l-3-3m3 3H9" />
                   </svg>
                 </div>

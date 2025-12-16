@@ -30,19 +30,11 @@ export const AuthPage: React.FC = () => {
       
       // Get the full URL - use environment variable for production or current origin
       // This ensures we never redirect to localhost in production
-      const productionUrl = 'https://shoppinglist-orpin.vercel.app';
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-                      (window.location.hostname === 'localhost' ? window.location.origin : productionUrl);
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const baseUrl = isLocalhost ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin);
       const redirectUrl = `${baseUrl}/`;
       
-      console.log('[Auth] Google sign-in started', { 
-        isIOS, 
-        isStandalone, 
-        redirectUrl, 
-        baseUrl,
-        hostname: window.location.hostname,
-        env: process.env.NEXT_PUBLIC_SITE_URL 
-      });
+      console.log('[Auth] Google sign-in started', { isIOS, isStandalone, redirectUrl, baseUrl, isLocalhost });
       
       // For Google OAuth, we can't prevent signup at the OAuth level
       // So we'll check after authentication in the AuthContext
